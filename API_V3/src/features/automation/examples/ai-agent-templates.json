@@ -1,0 +1,330 @@
+{
+  "templates": [
+    {
+      "name": "Agente de Ventas con IA",
+      "description": "Chatbot inteligente para calificar leads y procesar ventas usando GPT-4",
+      "category": "ai-agent",
+      "difficulty": "advanced",
+      "aiConfig": {
+        "enabled": true,
+        "model": "gpt-4",
+        "systemPrompt": "Eres un experto vendedor para {{CLIENT_NAME}}. Tu objetivo es:\n1. Calificar leads preguntando sobre necesidades y presupuesto\n2. Proporcionar información de productos de manera persuasiva\n3. Agendar demos o reuniones con prospects calificados\n4. Siempre ser amigable, profesional y orientado a resultados\n\nInfo de la empresa: {{COMPANY_INFO}}\nProductos: {{PRODUCTS_INFO}}\nHorarios: {{BUSINESS_HOURS}}",
+        "temperature": 0.7,
+        "maxTokens": 800,
+        "features": ["conversation-memory", "intent-recognition", "lead-scoring"]
+      },
+      "platforms": ["whatsapp", "webchat"],
+      "variables": [
+        {
+          "name": "CLIENT_NAME",
+          "label": "Nombre de la empresa",
+          "type": "text",
+          "required": true,
+          "description": "Nombre comercial de tu empresa"
+        },
+        {
+          "name": "COMPANY_INFO",
+          "label": "Información de la empresa",
+          "type": "textarea",
+          "required": true,
+          "description": "Descripción de la empresa, misión, valores"
+        },
+        {
+          "name": "PRODUCTS_INFO",
+          "label": "Información de productos",
+          "type": "textarea",
+          "required": true,
+          "description": "Lista de productos/servicios con precios y características"
+        },
+        {
+          "name": "OPENAI_API_KEY",
+          "label": "OpenAI API Key",
+          "type": "text",
+          "required": true,
+          "description": "Tu clave API de OpenAI"
+        }
+      ],
+      "features": ["ai-powered", "lead-capture", "appointment-booking", "context-aware"],
+      "workflow": {
+        "name": "Template: Agente de Ventas IA",
+        "nodes": [
+          {
+            "id": "webhook",
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "position": [200, 300],
+            "parameters": {
+              "httpMethod": "POST",
+              "path": "sales-agent",
+              "responseMode": "responseNode"
+            }
+          },
+          {
+            "id": "preprocessMessage",
+            "name": "Preprocess Message",
+            "type": "n8n-nodes-base.function",
+            "position": [400, 300],
+            "parameters": {
+              "functionCode": "// Extraer y procesar mensaje\nconst message = $json.message || $json.text || '';\nconst userId = $json.userId || $json.from || 'anonymous';\nconst platform = $json.platform || 'whatsapp';\n\n// Preparar contexto\nreturn {\n  userId,\n  message,\n  platform,\n  timestamp: new Date().toISOString(),\n  clientName: '{{CLIENT_NAME}}',\n  companyInfo: '{{COMPANY_INFO}}',\n  productsInfo: '{{PRODUCTS_INFO}}'\n};"
+            }
+          },
+          {
+            "id": "getConversationHistory",
+            "name": "Get Conversation History",
+            "type": "n8n-nodes-base.httpRequest",
+            "position": [600, 300],
+            "parameters": {
+              "method": "GET",
+              "url": "{{SMARTOPS_API_URL}}/api/conversations/{{$json.userId}}/history",
+              "headers": {
+                "Authorization": "Bearer {{SMARTOPS_API_TOKEN}}"
+              }
+            }
+          },
+          {
+            "id": "aiSalesAgent",
+            "name": "AI Sales Agent",
+            "type": "n8n-nodes-base.openAi",
+            "position": [800, 300],
+            "parameters": {
+              "operation": "chat",
+              "model": "gpt-4",
+              "messages": {
+                "chatInput": [
+                  {
+                    "role": "system",
+                    "content": "Eres un experto vendedor para {{CLIENT_NAME}}. Tu objetivo es:\n1. Calificar leads preguntando sobre necesidades y presupuesto\n2. Proporcionar información de productos de manera persuasiva\n3. Agendar demos o reuniones con prospects calificados\n4. Siempre ser amigable, profesional y orientado a resultados\n\nInfo de la empresa: {{COMPANY_INFO}}\nProductos: {{PRODUCTS_INFO}}\nHorarios: {{BUSINESS_HOURS}}\n\nHistorial de conversación: {{$json.conversationHistory}}"
+                  },
+                  {
+                    "role": "user",
+                    "content": "{{$json.message}}"
+                  }
+                ]
+              },
+              "options": {
+                "temperature": 0.7,
+                "maxTokens": 800
+              }
+            }
+          },
+          {
+            "id": "extractIntent",
+            "name": "Extract Intent",
+            "type": "n8n-nodes-base.function",
+            "position": [1000, 300],
+            "parameters": {
+              "functionCode": "const aiResponse = $json.message?.content || $json.choices?.[0]?.message?.content || '';\nconst userMessage = $('preprocessMessage').first().$json.message;\n\n// Detectar intenciones usando keywords\nlet intent = 'general';\nlet leadScore = 0;\n\nconst buyingKeywords = ['precio', 'costo', 'comprar', 'contratar', 'cotización', 'presupuesto'];\nconst infoKeywords = ['información', 'detalles', 'características', 'funciones'];\nconst demoKeywords = ['demo', 'prueba', 'reunión', 'presentación', 'agendar'];\n\nif (buyingKeywords.some(keyword => userMessage.toLowerCase().includes(keyword))) {\n  intent = 'buying';\n  leadScore = 80;\n} else if (demoKeywords.some(keyword => userMessage.toLowerCase().includes(keyword))) {\n  intent = 'demo_request';\n  leadScore = 70;\n} else if (infoKeywords.some(keyword => userMessage.toLowerCase().includes(keyword))) {\n  intent = 'information';\n  leadScore = 40;\n}\n\nreturn {\n  aiResponse,\n  userMessage,\n  intent,\n  leadScore,\n  userId: $('preprocessMessage').first().$json.userId,\n  timestamp: new Date().toISOString()\n};"
+            }
+          },
+          {
+            "id": "saveInteraction",
+            "name": "Save Interaction",
+            "type": "n8n-nodes-base.httpRequest",
+            "position": [1200, 300],
+            "parameters": {
+              "method": "POST",
+              "url": "{{SMARTOPS_API_URL}}/api/conversations/{{$json.userId}}/interaction",
+              "headers": {
+                "Authorization": "Bearer {{SMARTOPS_API_TOKEN}}",
+                "Content-Type": "application/json"
+              },
+              "body": {
+                "userMessage": "={{$json.userMessage}}",
+                "aiResponse": "={{$json.aiResponse}}",
+                "intent": "={{$json.intent}}",
+                "leadScore": "={{$json.leadScore}}",
+                "timestamp": "={{$json.timestamp}}"
+              }
+            }
+          },
+          {
+            "id": "checkForAppointment",
+            "name": "Check for Appointment",
+            "type": "n8n-nodes-base.switch",
+            "position": [1000, 500],
+            "parameters": {
+              "conditions": {
+                "options": {
+                  "expression": "{{$json.intent === 'demo_request' || $json.leadScore >= 70}}"
+                }
+              }
+            }
+          },
+          {
+            "id": "createLead",
+            "name": "Create Lead",
+            "type": "n8n-nodes-base.httpRequest",
+            "position": [1200, 500],
+            "parameters": {
+              "method": "POST",
+              "url": "{{SMARTOPS_API_URL}}/api/crm/leads",
+              "headers": {
+                "Authorization": "Bearer {{SMARTOPS_API_TOKEN}}",
+                "Content-Type": "application/json"
+              },
+              "body": {
+                "userId": "={{$json.userId}}",
+                "source": "ai-chatbot",
+                "intent": "={{$json.intent}}",
+                "leadScore": "={{$json.leadScore}}",
+                "lastMessage": "={{$json.userMessage}}",
+                "platform": "={{$('preprocessMessage').first().$json.platform}}"
+              }
+            }
+          },
+          {
+            "id": "response",
+            "name": "Response",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "position": [1400, 300],
+            "parameters": {
+              "respondWith": "json",
+              "responseBody": "{\n  \"message\": \"{{$('extractIntent').first().$json.aiResponse}}\",\n  \"timestamp\": \"{{$('extractIntent').first().$json.timestamp}}\",\n  \"intent\": \"{{$('extractIntent').first().$json.intent}}\",\n  \"leadScore\": {{$('extractIntent').first().$json.leadScore}}\n}"
+            }
+          }
+        ],
+        "connections": {
+          "Webhook": { "main": [[ { "node": "Preprocess Message", "type": "main", "index": 0 } ]] },
+          "Preprocess Message": { "main": [[ { "node": "Get Conversation History", "type": "main", "index": 0 } ]] },
+          "Get Conversation History": { "main": [[ { "node": "AI Sales Agent", "type": "main", "index": 0 } ]] },
+          "AI Sales Agent": { "main": [[ { "node": "Extract Intent", "type": "main", "index": 0 } ]] },
+          "Extract Intent": { 
+            "main": [
+              [ 
+                { "node": "Save Interaction", "type": "main", "index": 0 },
+                { "node": "Check for Appointment", "type": "main", "index": 0 }
+              ] 
+            ] 
+          },
+          "Save Interaction": { "main": [[ { "node": "Response", "type": "main", "index": 0 } ]] },
+          "Check for Appointment": { "main": [[ { "node": "Create Lead", "type": "main", "index": 0 } ]] },
+          "Create Lead": { "main": [[ { "node": "Response", "type": "main", "index": 0 } ]] }
+        }
+      }
+    },
+    {
+      "name": "Soporte Técnico con IA",
+      "description": "Agente de soporte que resuelve consultas técnicas y escala tickets complejos",
+      "category": "support",
+      "difficulty": "advanced",
+      "aiConfig": {
+        "enabled": true,
+        "model": "gpt-3.5-turbo",
+        "systemPrompt": "Eres un agente de soporte técnico experto para {{CLIENT_NAME}}. Tu función es:\n1. Resolver problemas técnicos comunes paso a paso\n2. Proporcionar troubleshooting detallado\n3. Escalar a humanos solo cuando sea necesario\n4. Ser paciente, claro y profesional\n\nBase de conocimiento: {{KNOWLEDGE_BASE}}\nEscalar si: el problema requiere acceso a sistemas internos, es un bug crítico, o el usuario solicita hablar con humano.",
+        "temperature": 0.3,
+        "maxTokens": 600,
+        "features": ["conversation-memory", "sentiment-analysis", "ticket-creation"]
+      },
+      "platforms": ["whatsapp", "telegram", "webchat"],
+      "variables": [
+        {
+          "name": "CLIENT_NAME",
+          "label": "Nombre de la empresa",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "KNOWLEDGE_BASE",
+          "label": "Base de conocimiento",
+          "type": "textarea",
+          "required": true,
+          "description": "FAQ y soluciones técnicas comunes"
+        },
+        {
+          "name": "ESCALATION_EMAIL",
+          "label": "Email para escalación",
+          "type": "text",
+          "required": true,
+          "description": "Email del equipo de soporte para escalaciones"
+        }
+      ],
+      "features": ["ai-powered", "customer-support", "ticket-management", "sentiment-analysis"]
+    },
+    {
+      "name": "Asistente de Citas con IA",
+      "description": "Bot inteligente para agendar citas considerando disponibilidad y preferencias",
+      "category": "appointment",
+      "difficulty": "intermediate",
+      "aiConfig": {
+        "enabled": true,
+        "model": "gpt-3.5-turbo",
+        "systemPrompt": "Eres un asistente de citas para {{CLIENT_NAME}}. Ayudas a:\n1. Verificar disponibilidad en tiempo real\n2. Sugerir horarios que funcionen para el cliente\n3. Confirmar datos de contacto y servicio requerido\n4. Enviar recordatorios automáticos\n\nServicios disponibles: {{SERVICES}}\nHorarios de atención: {{BUSINESS_HOURS}}\nDuración promedio de citas: {{APPOINTMENT_DURATION}} minutos",
+        "temperature": 0.5,
+        "maxTokens": 400,
+        "features": ["conversation-memory", "calendar-integration"]
+      },
+      "platforms": ["whatsapp", "instagram"],
+      "variables": [
+        {
+          "name": "SERVICES",
+          "label": "Servicios disponibles",
+          "type": "textarea",
+          "required": true,
+          "description": "Lista de servicios con duración y precio"
+        },
+        {
+          "name": "APPOINTMENT_DURATION",
+          "label": "Duración promedio (minutos)",
+          "type": "number",
+          "defaultValue": 60,
+          "required": true
+        },
+        {
+          "name": "CALENDAR_API_KEY",
+          "label": "API Key del calendario",
+          "type": "text",
+          "required": true,
+          "description": "Para integración con Google Calendar o similar"
+        }
+      ],
+      "features": ["ai-powered", "appointment-booking", "calendar-integration", "reminders"]
+    },
+    {
+      "name": "Agente E-commerce con IA",
+      "description": "Asistente de compras que recomienda productos y procesa órdenes",
+      "category": "ecommerce",
+      "difficulty": "advanced",
+      "aiConfig": {
+        "enabled": true,
+        "model": "gpt-4",
+        "systemPrompt": "Eres un asistente de ventas experto para la tienda {{CLIENT_NAME}}. Tu trabajo es:\n1. Entender las necesidades del cliente haciendo preguntas específicas\n2. Recomendar productos relevantes basado en preferencias y presupuesto\n3. Explicar características, beneficios y comparaciones\n4. Asistir en el proceso de compra\n5. Ofrecer upsells y cross-sells apropiados\n\nCatálogo de productos: {{PRODUCTS_CATALOG}}\nPromociones activas: {{ACTIVE_PROMOTIONS}}\nPolíticas de envío: {{SHIPPING_POLICIES}}",
+        "temperature": 0.6,
+        "maxTokens": 700,
+        "features": ["conversation-memory", "intent-recognition", "recommendation-engine"]
+      },
+      "platforms": ["whatsapp", "instagram", "facebook"],
+      "variables": [
+        {
+          "name": "PRODUCTS_CATALOG",
+          "label": "Catálogo de productos",
+          "type": "textarea",
+          "required": true,
+          "description": "Productos disponibles con precios, características y stock"
+        },
+        {
+          "name": "ACTIVE_PROMOTIONS",
+          "label": "Promociones activas",
+          "type": "textarea",
+          "required": false,
+          "description": "Descuentos y ofertas especiales vigentes"
+        },
+        {
+          "name": "SHIPPING_POLICIES",
+          "label": "Políticas de envío",
+          "type": "textarea",
+          "required": true,
+          "description": "Costos, tiempos y zonas de entrega"
+        },
+        {
+          "name": "PAYMENT_METHODS",
+          "label": "Métodos de pago",
+          "type": "select",
+          "options": ["Efectivo", "Tarjeta", "Transferencia", "PayPal", "Todos"],
+          "defaultValue": "Todos",
+          "required": true
+        }
+      ],
+      "features": ["ai-powered", "order-processing", "product-recommendations", "payment-integration"]
+    }
+  ]
+} 

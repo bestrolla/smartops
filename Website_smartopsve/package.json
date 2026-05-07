@@ -1,0 +1,53 @@
+{
+  "name": "website-smartopsve-and-profiles",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p %PORT%",
+    "lint": "bunx biome lint --write && bunx tsc --noEmit",
+    "format": "bunx biome format --write",
+    "docker:build": "docker build -t web-smartops-dev .",
+    "docker:run": "docker run -p 3000:3000 -v %cd%:/app --add-host=host.docker.internal:host-gateway web-smartops-dev",
+    "docker:dev": "npm run docker:build && npm run docker:run",
+    "docker:build:prod": "docker build -f Dockerfile.prod -t web-smartops-prod .",
+    "docker:run:prod": "docker run -p 8080:8080 web-smartops-prod",
+    "deploy:cloud-run": "gcloud run deploy web-smartops --image web-smartops-prod --platform managed"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@mui/material": "^7.1.1",
+    "@radix-ui/react-accordion": "^1.2.11",
+    "@radix-ui/react-avatar": "^1.1.10",
+    "@radix-ui/react-dialog": "^1.1.14",
+    "@radix-ui/react-slot": "^1.2.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "firebase-admin": "^13.5.0",
+    "firebase-functions": "^6.5.0",
+    "framer-motion": "^12.15.0",
+    "lucide-react": "^0.475.0",
+    "next": "^15.5.7",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.56.4",
+    "react-icons": "^5.5.0",
+    "tailwind-merge": "^3.3.0",
+    "tailwindcss-animate": "^1.0.7"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@eslint/eslintrc": "^3.3.1",
+    "@types/node": "^20.17.50",
+    "@types/react": "^18.3.22",
+    "@types/react-dom": "^18.3.7",
+    "bippy": "^0.3.16",
+    "eslint": "^9.27.0",
+    "eslint-config-next": "15.3.6",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.8.3"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "SmartOps - Soluciones Inteligentes para tu Negocio",
+  "short_name": "SmartOps",
+  "icons": [
+    {
+      "src": "/web-app-manifest-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "theme_color": "#3956FF",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/",
+  "scope": "/",
+  "description": "Plataforma de gestión empresarial con perfiles digitales, tiendas online y soluciones inteligentes para tu negocio."
+}

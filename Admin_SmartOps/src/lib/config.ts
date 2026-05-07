@@ -1,0 +1,34 @@
+// Configuración centralizada para variables de entorno
+export const config = {
+  // URL del API
+  apiUrl: import.meta.env.VITE_API_URL ?? getDefaultApiUrl(),
+
+  // Entorno actual
+  environment: import.meta.env.VITE_ENV ?? import.meta.env.MODE ?? "development",
+
+  // Verificar si estamos en desarrollo
+  isDevelopment: import.meta.env.DEV,
+
+  // Verificar si estamos en producción
+  isProduction: import.meta.env.PROD,
+};
+
+// Función para obtener la URL del API por defecto
+function getDefaultApiUrl(): string {
+  if (import.meta.env.DEV) {
+    return "/api"; // 👈 usar proxy de Vite en desarrollo para evitar CORS y VPN
+  }
+  return "https://api-smartops-147414442.us-west1.run.app/api"; // 👈 asegúrate que esta sea la correcta
+}
+
+// Función para obtener la URL del API dinámicamente
+export function getApiUrl(): string {
+  return config.apiUrl;
+}
+
+// Función para debug (solo en desarrollo)
+export function logConfig() {
+  if (config.isDevelopment) {
+    console.log("🔧 Configuración actual:", config);
+  }
+}

@@ -1,0 +1,17 @@
+/* Estilos específicos para ProfileSetup.tsx */
+
+.profile-header-gradient {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+}
+
+.theme-color-primary {
+  background-color: var(--theme-primary);
+}
+
+.theme-color-secondary {
+  background-color: var(--theme-secondary);
+}
+
+.theme-color-accent {
+  background-color: var(--theme-accent);
+}

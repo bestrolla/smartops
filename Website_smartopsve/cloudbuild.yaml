@@ -1,0 +1,41 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE_NAME}:${SHORT_SHA}'
+      - '.'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE_NAME}:${SHORT_SHA}'
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - '${_SERVICE}'
+      - '--image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE_NAME}:${SHORT_SHA}'
+      - '--platform=managed'
+      - '--region=${_REGION}'
+      - '--allow-unauthenticated'
+      - '--port=3000'
+      - '--set-env-vars'
+      - 'NEXT_PUBLIC_SITE_URL=${_NEXT_PUBLIC_SITE_URL},NEXT_PUBLIC_API_URL=${_NEXT_PUBLIC_API_URL}'
+      - '--memory=512Mi'
+      - '--cpu=1'
+      - '--max-instances=10'
+      - '--concurrency=80'
+
+images:
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_IMAGE_NAME}:${SHORT_SHA}'
+
+substitutions:
+  _REGION: 'northamerica-northeast1'
+  _SERVICE: 'website-smartopsve-and-profiles'
+  _REPO: 'website-repo'
+  _IMAGE_NAME: 'website-smartopsve-and-profiles'
+  _NEXT_PUBLIC_SITE_URL: 'https://smartopsve.com'
+  _NEXT_PUBLIC_API_URL: 'https://api.smartopsve.com/api'

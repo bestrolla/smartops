@@ -1,0 +1,70 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+.pnpm-debug.log
+
+# Environment variables
+.env
+.env.local
+.env*.local
+.env.prod
+
+# MongoDB
+/data
+/db
+*.ns
+*.mongod.lock
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-workspace
+
+# Testing
+coverage/
+.nyc_output/
+*.lcov
+
+# Swagger/OpenAPI
+/swagger-output.json
+/api-spec/
+
+# Logs
+*.log
+logs/
+audit/
+*.pid
+
+# macOS
+.DS_Store
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Archivos de desarrollo
+tmp/
+temp/
+uploads/
+*.tmp
+*.bak
+*.backup
+
+# Archivos de compilación
+dist/
+build/
+*.tsbuildinfo
+
+# Configuraciones personales
+*.env.user
+*.env.backup
+
+# Docker
+docker-compose.override.yml
+
+SmartOps.code-workspace

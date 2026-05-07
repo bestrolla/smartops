@@ -1,0 +1,197 @@
+{
+  "name": "SmartOps WhatsApp Chatbot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-whatsapp",
+      "name": "WhatsApp Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Procesar mensaje de WhatsApp\nconst message = $json.message?.text?.body || '';\nconst from = $json.message?.from || '';\nconst messageId = $json.message?.id || '';\n\n// Lógica de respuesta básica\nlet response = 'Lo siento, no entendí tu mensaje.';\nlet responseType = 'text';\n\nconst lowerMessage = message.toLowerCase();\n\n// Respuestas automáticas\nif (lowerMessage.includes('hola') || lowerMessage.includes('hello')) {\n  response = '¡Hola! 👋 Soy el asistente virtual de SmartOps. ¿En qué puedo ayudarte?\\n\\n📋 Escribe:\\n• \"servicios\" - Para ver nuestros servicios\\n• \"precios\" - Para información de precios\\n• \"contacto\" - Para hablar con un humano';\n} else if (lowerMessage.includes('servicios')) {\n  response = '🚀 Nuestros servicios incluyen:\\n\\n• Desarrollo Web\\n• Marketing Digital\\n• Automatización de Procesos\\n• Consultoría Tecnológica\\n\\n¿Te interesa alguno en particular?';\n} else if (lowerMessage.includes('precios')) {\n  response = '💰 Nuestros precios son muy competitivos:\\n\\n• Desarrollo Web: Desde $999 USD\\n• Marketing Digital: Desde $299 USD/mes\\n• Automatización: Desde $499 USD\\n\\n¿Quieres una cotización personalizada?';\n} else if (lowerMessage.includes('contacto') || lowerMessage.includes('humano')) {\n  response = '👨‍💼 Te conectaré con un asesor humano.\\n\\nEn breve alguien de nuestro equipo se pondrá en contacto contigo.\\n\\n📞 También puedes llamarnos al: +52 123 456 7890';\n  responseType = 'contact_human';\n} else if (lowerMessage.includes('gracias')) {\n  response = '¡De nada! 😊 Estoy aquí para ayudarte cuando lo necesites.';\n}\n\n// Retornar datos estructurados\nreturn {\n  from: from,\n  messageId: messageId,\n  originalMessage: message,\n  response: response,\n  responseType: responseType,\n  timestamp: new Date().toISOString(),\n  processed: true\n};"
+      },
+      "id": "process-message",
+      "name": "Process Message",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.responseType}}",
+              "operation": "equal",
+              "value2": "contact_human"
+            }
+          ]
+        }
+      },
+      "id": "check-human-contact",
+      "name": "Check Human Contact",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{process.env.SMARTOPS_API_URL}}/api/crm/leads",
+        "authentication": "headerAuth",
+        "headerAuth": {
+          "name": "Authorization",
+          "value": "Bearer {{process.env.SMARTOPS_API_TOKEN}}"
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "{\n  \"name\": \"Lead desde WhatsApp\",\n  \"phone\": \"{{$json.from}}\",\n  \"source\": \"whatsapp_bot\",\n  \"message\": \"{{$json.originalMessage}}\",\n  \"priority\": \"high\",\n  \"status\": \"new\"\n}",
+        "options": {}
+      },
+      "id": "create-lead",
+      "name": "Create Lead in CRM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "url": "={{process.env.WHATSAPP_API_URL}}/v1/messages",
+        "authentication": "headerAuth",
+        "headerAuth": {
+          "name": "Authorization",
+          "value": "Bearer {{process.env.WHATSAPP_API_TOKEN}}"
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "{\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{$json.from}}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": \"{{$json.response}}\"\n  }\n}",
+        "options": {}
+      },
+      "id": "send-whatsapp-response",
+      "name": "Send WhatsApp Response",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "url": "={{process.env.SMARTOPS_API_URL}}/api/automation/automations/{{process.env.AUTOMATION_ID}}/webhook",
+        "authentication": "headerAuth",
+        "headerAuth": {
+          "name": "Authorization",
+          "value": "Bearer {{process.env.SMARTOPS_API_TOKEN}}"
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "{\n  \"success\": true,\n  \"platform\": \"whatsapp\",\n  \"from\": \"{{$json.from}}\",\n  \"message\": \"{{$json.originalMessage}}\",\n  \"response\": \"{{$json.response}}\",\n  \"responseType\": \"{{$json.responseType}}\",\n  \"timestamp\": \"{{$json.timestamp}}\"\n}",
+        "options": {}
+      },
+      "id": "log-interaction",
+      "name": "Log Interaction",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"success\": true,\n  \"message\": \"Processed successfully\",\n  \"timestamp\": \"{{new Date().toISOString()}}\"\n}",
+        "options": {}
+      },
+      "id": "webhook-response",
+      "name": "Webhook Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1340, 300]
+    }
+  ],
+  "connections": {
+    "WhatsApp Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Message": {
+      "main": [
+        [
+          {
+            "node": "Check Human Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Human Contact": {
+      "main": [
+        [
+          {
+            "node": "Create Lead in CRM",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send WhatsApp Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Lead in CRM": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send WhatsApp Response": {
+      "main": [
+        [
+          {
+            "node": "Log Interaction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Interaction": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "staticData": {},
+  "meta": {
+    "description": "Chatbot automatizado para WhatsApp que procesa mensajes, responde automáticamente y crea leads en SmartOps CRM",
+    "tags": ["whatsapp", "chatbot", "smartops", "automation"]
+  }
+} 
