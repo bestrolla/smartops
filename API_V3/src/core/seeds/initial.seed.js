@@ -10,6 +10,8 @@ const PermissionService = require('../auth/roles/services/permission.service');
 const Product = require('../../features/products/models/Product');
 const ProductVariant = require('../../features/products/models/ProductVariant');
 const Inventory = require('../../features/inventory/models/Inventory');
+const Category = require('../../features/products/models/Category');
+const ProfileService = require('../profiles/services/profile.service');
 // Importar modelos de los otros módulos
 let Appointment, CRM, Order, Professional, Service;
 try { Appointment = require('../../features/appointments/models/Appointment.model'); } catch {}
@@ -106,6 +108,7 @@ const createInitialData = async () => {
     // Crear tenant de prueba con plan Básico
     const tenant = await Tenant.create({
       name: 'SmartOps',
+      slug: 'smartops',
       domain: 'smartops.com',
       publicProfile: {
         displayName: 'SmartOps Technology',
@@ -123,6 +126,48 @@ const createInitialData = async () => {
       startDate: new Date(),
       endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     });
+
+    // Crear perfil público del tenant SmartOps
+    console.log('🖼️ Creando perfil público para SmartOps...');
+    await ProfileService.createOrUpdateProfile(tenant._id, {
+      public_name: 'SmartOps Technology',
+      title: 'Soluciones Tecnológicas',
+      specialty: 'Automatización y E-commerce',
+      bio: 'Perfil de ejemplo para demostración de módulos y servicios en SmartOps.',
+      contact: {
+        emails: [{ email: 'info@smartops.com', type: 'business', label: 'Soporte' }],
+        phones: [{ phone: '+58 412 0000000', type: 'whatsapp', label: 'Atención' }],
+        website: 'https://smartopsve.com'
+      },
+      social_links: [
+        { platform: 'linkedin', url: 'https://linkedin.com/company/smartops' },
+        { platform: 'twitter', url: 'https://twitter.com/smartops' }
+      ],
+      stats: [
+        { label: 'Clientes', value: '120+' },
+        { label: 'Automatizaciones', value: '350+' }
+      ],
+      profile_sections: {
+        show_services: true,
+        show_products: true,
+        show_appointments: true,
+        show_stats: true,
+        show_testimonials: true,
+        show_contact: true,
+        show_location: true,
+        show_social: true
+      },
+      section_order: ['header', 'stats', 'services', 'products', 'testimonials', 'contact', 'location', 'social', 'appointments'],
+      theme: {
+        colors: { primary: '#4f46e5', secondary: '#f43f5e' },
+        layout: 'default'
+      },
+      location: {
+        address: 'Caracas, Venezuela',
+        city: 'Caracas',
+        country: 'VE'
+      }
+    }, null);
 
     // Generar permisos por defecto
     console.log('🔐 Generando permisos por defecto...');
@@ -270,13 +315,13 @@ const createInitialData = async () => {
     console.log('👤 Creando usuarios de ejemplo...');
     
     const adminUser = await User.create({
-      username: 'vmontoya',
-      email: 'vmontoya@smartops.com',
+      username: 'admin',
+      email: 'admin@smartops.com',
       password: 'Admin123!',
-      firstName: 'Victor',
-      lastName: 'Montoya',
+      firstName: 'Admin',
+      lastName: 'SmartOps',
       status: 'active',
-      roles: [adminRole._id],
+      roles: [superadminRole._id, adminRole._id],
       tenantId: tenant._id,
       isActive: true
     });
@@ -340,6 +385,18 @@ const createInitialData = async () => {
     // Crear productos de ejemplo
     console.log('📦 Creando productos de ejemplo...');
 
+    // Crear categorías de ejemplo
+    const techCategory = await Category.create({
+      tenantId: tenant._id.toString(),
+      name: 'Tecnología',
+      description: 'Equipos y dispositivos electrónicos'
+    });
+    const softwareCategory = await Category.create({
+      tenantId: tenant._id.toString(),
+      name: 'Software',
+      description: 'Programas y licencias digitales'
+    });
+
     // Producto con variantes - Laptop
     const laptopProduct = await Product.create({
       tenantId: tenant._id.toString(),
@@ -350,7 +407,7 @@ const createInitialData = async () => {
       baseCost: 800.00,
       hasVariants: true,
       isActive: true,
-      categories: [],
+      category: techCategory._id,
       isDigital: false,
       images: [
         'https://example.com/laptop-1.jpg',
@@ -374,10 +431,10 @@ const createInitialData = async () => {
         tenantId: tenant._id.toString(),
         productId: laptopProduct._id,
         sku: 'LAPTOP-GAMING-001-RED',
-        options: [
-          { name: 'Color', value: 'Rojo' },
-          { name: 'RAM', value: '16GB' }
-        ],
+        attributes: new Map([
+          ['Color', 'Rojo'],
+          ['RAM', '16GB']
+        ]),
         price: 1250.00,
         stock: 15,
         isActive: true,
@@ -387,10 +444,10 @@ const createInitialData = async () => {
         tenantId: tenant._id.toString(),
         productId: laptopProduct._id,
         sku: 'LAPTOP-GAMING-001-BLUE',
-        options: [
-          { name: 'Color', value: 'Azul' },
-          { name: 'RAM', value: '16GB' }
-        ],
+        attributes: new Map([
+          ['Color', 'Azul'],
+          ['RAM', '16GB']
+        ]),
         price: 1250.00,
         stock: 12,
         isActive: true,
@@ -400,10 +457,10 @@ const createInitialData = async () => {
         tenantId: tenant._id.toString(),
         productId: laptopProduct._id,
         sku: 'LAPTOP-GAMING-001-32GB',
-        options: [
-          { name: 'Color', value: 'Negro' },
-          { name: 'RAM', value: '32GB' }
-        ],
+        attributes: new Map([
+          ['Color', 'Negro'],
+          ['RAM', '32GB']
+        ]),
         price: 1400.00,
         stock: 8,
         isActive: true,
@@ -417,11 +474,12 @@ const createInitialData = async () => {
       name: 'Mouse Gaming RGB',
       description: 'Mouse ergonómico con iluminación RGB para gaming',
       sku: 'MOUSE-GAMING-001',
+      price: 45.00,
       basePrice: 45.00,
       baseCost: 25.00,
       hasVariants: false,
       isActive: true,
-      categories: [],
+      category: techCategory._id,
       isDigital: false,
       images: [
         'https://example.com/mouse-1.jpg'
@@ -440,11 +498,12 @@ const createInitialData = async () => {
       name: 'Software de Gestión Empresarial',
       description: 'Solución completa para gestión de empresas',
       sku: 'SOFTWARE-GESTION-001',
+      price: 299.00,
       basePrice: 299.00,
       baseCost: 50.00,
       hasVariants: false,
       isActive: true,
-      categories: [],
+      category: softwareCategory._id,
       isDigital: true,
       digitalDetails: {
         downloadUrl: 'https://downloads.example.com/software-gestion-v2.0.zip',
@@ -516,7 +575,7 @@ const createInitialData = async () => {
     console.log('✅ Inventario creado para', inventoryItems.length, 'productos');
 
     // Verificar que el usuario admin se creó correctamente
-    const verifyUser = await User.findByCredentials('vmontoya', 'Admin123!');
+    const verifyUser = await User.findByCredentials('admin', 'Admin123!');
     if (!verifyUser) {
       throw new Error('Error al verificar las credenciales del usuario creado');
     }
@@ -562,6 +621,8 @@ const createInitialData = async () => {
 
     if (Order && createdCustomers.length > 0) {
       createdOrders = [];
+      const laptopPrice = 1250.00;
+      const mousePrice = 45.00;
       const ordersData = [
         {
           tenant_id: tenant._id.toString(),
@@ -570,14 +631,14 @@ const createInitialData = async () => {
             {
               product: laptopProduct._id,
               quantity: 1,
-              price: laptopProduct.basePrice
+              price: laptopPrice
             }
           ],
           status: 'pending',
           paymentMethod: 'cash',
-          subtotal: laptopProduct.basePrice,
-          tax: laptopProduct.basePrice * 0.16,
-          total: laptopProduct.basePrice * 1.16
+          subtotal: laptopPrice,
+          tax: laptopPrice * 0.16,
+          total: laptopPrice * 1.16
         },
         {
           tenant_id: tenant._id.toString(),
@@ -586,14 +647,14 @@ const createInitialData = async () => {
             {
               product: mouseProduct._id,
               quantity: 2,
-              price: mouseProduct.basePrice
+              price: mousePrice
             }
           ],
           status: 'completed',
           paymentMethod: 'credit_card',
-          subtotal: mouseProduct.basePrice * 2,
-          tax: mouseProduct.basePrice * 2 * 0.16,
-          total: mouseProduct.basePrice * 2 * 1.16
+          subtotal: mousePrice * 2,
+          tax: mousePrice * 2 * 0.16,
+          total: mousePrice * 2 * 1.16
         }
       ];
       for (const orderData of ordersData) {
@@ -666,6 +727,8 @@ const createInitialData = async () => {
         {
           tenantId: tenant._id,
           userId: createdProfessionalUsers[0]._id,
+          name: 'Carlos',
+          surname: 'Médico',
           professionalType: createdProfessionalTypes[0]._id,
           specialties: ['Medicina General'],
           licenseNumber: 'MED12345',
@@ -675,6 +738,8 @@ const createInitialData = async () => {
         {
           tenantId: tenant._id,
           userId: createdProfessionalUsers[1]._id,
+          name: 'Ana',
+          surname: 'Ingeniera',
           professionalType: createdProfessionalTypes[1]._id,
           specialties: ['Desarrollo Web', 'Backend'],
           experienceYears: 7,
@@ -683,6 +748,8 @@ const createInitialData = async () => {
         {
           tenantId: tenant._id,
           userId: createdProfessionalUsers[2]._id,
+          name: 'Laura',
+          surname: 'Psicóloga',
           professionalType: createdProfessionalTypes[2]._id,
           specialties: ['Psicología Clínica'],
           licenseNumber: 'PSI67890',

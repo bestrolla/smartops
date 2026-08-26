@@ -10,7 +10,8 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "seed:plans": "node src\\core\\seeds\\plan.seed.js",
-    "seed:superadmin": "node src\\core\\seeds\\superadmin.seed.js"
+    "seed:superadmin": "node src\\core\\seeds\\superadmin.seed.js",
+    "seed:all": "node src/core/seeds/seed-all.js"
   },
   "keywords": [],
   "author": "",

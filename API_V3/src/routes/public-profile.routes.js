@@ -7,7 +7,7 @@ const logger = require('../shared/logger');
 const ServiceCoreService = require('../features/services/services/ServiceCoreService');
 const ProductService = require('../features/products/services/productService');
 
-router.get('/:slug', requireTenant, requirePublicProfile, async (req, res, next) => {
+router.get('/:slug', async (req, res, next) => {
   try {
     const { slug } = req.params;
     const tenant = await TenantService.findBySlug(slug);

@@ -396,7 +396,7 @@ function resolveApiBase(): string {
   if (!base) {
     base = nodeEnv === 'production'
       ? 'https://api.smartopsve.com'
-      : 'http://localhost:3000';
+      : 'http://localhost:5001';
   }
 
   return base;
