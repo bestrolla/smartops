@@ -27,22 +27,31 @@ app.use(helmet({
 }));
 
 // Configuración de CORS
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:3002',
+  'http://localhost:4500',
+  'http://localhost:5001',
+  'http://localhost:5173',
+  'https://admin.smartopsve.com',
+  'https://smartopsve.com',
+  'https://www.smartopsve.com',
+  'https://api.smartopsve.com',
+  'https://smartops-lake.vercel.app',
+  'https://www.smartops-lake.vercel.app',
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+  ...(process.env.PUBLIC_SITE_URL ? [process.env.PUBLIC_SITE_URL] : [])
+];
+
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? [
-        'https://admin.smartopsve.com',
-        'https://smartopsve.com',
-        'https://www.smartopsve.com',
-        'https://api.smartopsve.com'
-      ]
-    : [
-        'http://localhost:3000',
-        'http://localhost:3001',
-        'http://localhost:3002',
-        'http://localhost:4500',
-        'http://localhost:5001',
-        'http://localhost:5173'
-      ],
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin) || /(^|\.)vercel\.app$/.test(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: [
