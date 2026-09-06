@@ -1,4 +1,4 @@
-const PRODUCTION_API_URL = "https://smartops-api-147414442.us-west1.run.app/api";
+const PRODUCTION_API_URL = "https://smartops-api.vercel.app/api";
 
 // Configuración centralizada para variables de entorno
 export const config = {
