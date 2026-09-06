@@ -68,3 +68,4 @@ build/
 docker-compose.override.yml
 
 SmartOps.code-workspace
+.vercel
