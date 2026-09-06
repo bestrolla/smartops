@@ -1,0 +1,10 @@
+{
+  "buildCommand": "cd Admin_SmartOps && npm install && npm run build",
+  "outputDirectory": "Admin_SmartOps/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
