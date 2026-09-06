@@ -65,6 +65,7 @@ const allowedOrigins = [
   'https://api.smartopsve.com',
   'https://smartops-lake.vercel.app',
   'https://www.smartops-lake.vercel.app',
+  'https://smartops-teal.vercel.app',
   ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
   ...(process.env.PUBLIC_SITE_URL ? [process.env.PUBLIC_SITE_URL] : [])
 ];
