@@ -1,4 +1,4 @@
-const PRODUCTION_API_URL = "/api";
+const PRODUCTION_API_URL = "https://smartops-api-147414442.us-west1.run.app/api";
 
 // Configuración centralizada para variables de entorno
 export const config = {
@@ -18,11 +18,7 @@ export const config = {
 function getConfiguredApiUrl(): string {
   const configuredUrl = import.meta.env.VITE_API_URL;
 
-  if (import.meta.env.PROD) {
-    return PRODUCTION_API_URL;
-  }
-
-  return configuredUrl || getDefaultApiUrl();
+  return configuredUrl || (import.meta.env.PROD ? PRODUCTION_API_URL : getDefaultApiUrl());
 }
 
 // Función para obtener la URL del API por defecto
