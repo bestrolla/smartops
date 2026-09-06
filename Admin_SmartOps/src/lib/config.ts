@@ -18,7 +18,7 @@ function getDefaultApiUrl(): string {
   if (import.meta.env.DEV) {
     return "http://localhost:5001/api";
   }
-  return import.meta.env.VITE_API_URL || "/api";
+  return import.meta.env.VITE_API_URL || "https://poor-experts-reply.loca.lt/api";
 }
 
 // Función para obtener la URL del API dinámicamente
