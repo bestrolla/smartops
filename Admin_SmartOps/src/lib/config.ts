@@ -18,7 +18,7 @@ function getDefaultApiUrl(): string {
   if (import.meta.env.DEV) {
     return "http://localhost:5001/api";
   }
-  return "https://api-smartops-147414442.us-west1.run.app/api";
+  return import.meta.env.VITE_API_URL || "/api";
 }
 
 // Función para obtener la URL del API dinámicamente
