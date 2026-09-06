@@ -80,6 +80,29 @@ export default function SignIn() {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {/* Demo Credentials Box */}
+            <div className="mb-6 p-3.5 rounded-lg bg-blue-50 border border-blue-200 text-blue-900 text-sm font-montserrat flex flex-col gap-1.5 shadow-sm">
+              <div className="flex items-center justify-between font-semibold">
+                <span className="flex items-center gap-1.5 text-blue-900 font-bold">
+                  💡 Credenciales de Prueba
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUsernameOrEmail("admin@smartops.com");
+                    setPassword("Admin123!");
+                  }}
+                  className="text-xs bg-smartops-blue hover:bg-smartops-blue-hover text-white px-2.5 py-1 rounded font-medium transition-colors shadow-sm cursor-pointer"
+                >
+                  Auto-completar
+                </button>
+              </div>
+              <div className="text-xs text-blue-800 space-y-0.5 pt-1 border-t border-blue-200/60">
+                <p><strong>Email / Usuario:</strong> <code className="bg-white/80 px-1 py-0.5 rounded text-blue-900 font-mono">admin@smartops.com</code></p>
+                <p><strong>Contraseña:</strong> <code className="bg-white/80 px-1 py-0.5 rounded text-blue-900 font-mono">Admin123!</code></p>
+              </div>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Email Input */}
               <div className="space-y-2">
