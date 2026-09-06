@@ -1,7 +1,7 @@
 // Configuración centralizada para variables de entorno
 export const config = {
   // URL del API
-  apiUrl: import.meta.env.VITE_API_URL ?? getDefaultApiUrl(),
+  apiUrl: getConfiguredApiUrl(),
 
   // Entorno actual
   environment: import.meta.env.VITE_ENV ?? import.meta.env.MODE ?? "development",
@@ -13,12 +13,28 @@ export const config = {
   isProduction: import.meta.env.PROD,
 };
 
+const PRODUCTION_API_URL = "https://smartops-api-147414442.us-west1.run.app/api";
+
+function getConfiguredApiUrl(): string {
+  const configuredUrl = import.meta.env.VITE_API_URL;
+
+  if (
+    import.meta.env.PROD &&
+    configuredUrl &&
+    /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\b/i.test(configuredUrl)
+  ) {
+    return PRODUCTION_API_URL;
+  }
+
+  return configuredUrl || getDefaultApiUrl();
+}
+
 // Función para obtener la URL del API por defecto
 function getDefaultApiUrl(): string {
   if (import.meta.env.DEV) {
     return "http://localhost:5001/api";
   }
-  return import.meta.env.VITE_API_URL || "https://poor-experts-reply.loca.lt/api";
+  return PRODUCTION_API_URL;
 }
 
 // Función para obtener la URL del API dinámicamente

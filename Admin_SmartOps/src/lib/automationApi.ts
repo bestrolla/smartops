@@ -1,12 +1,6 @@
-// Debug: Verificar variables de entorno
-console.log('🔍 DEBUG - Variables de entorno:');
-console.log('import.meta.env.VITE_API_URL:', import.meta.env.VITE_API_URL);
-console.log('import.meta.env.MODE:', import.meta.env.MODE);
-console.log('import.meta.env.DEV:', import.meta.env.DEV);
+import { getApiUrl } from './config';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api'
-
-console.log('🎯 API_BASE_URL final:', API_BASE_URL);
+const API_BASE_URL = getApiUrl();
 
 // Types
 export interface Template {
