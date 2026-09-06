@@ -4,18 +4,13 @@ import { resolve as pathResolve } from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  optimizeDeps: {
+    include: ['react-is', 'recharts']
+  },
   build: {
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('react-is')) return undefined;
-            if (id.includes('@mui')) return 'mui';
-            if (id.includes('react-dom') || id.includes('/react/')) return 'react';
-            if (id.includes('date-fns')) return 'date-fns';
-          }
-        }
-      }
+    commonjsOptions: {
+      include: [/react-is/, /recharts/, /node_modules/],
+      transformMixedEsModules: true
     },
     chunkSizeWarningLimit: 2000
   },
