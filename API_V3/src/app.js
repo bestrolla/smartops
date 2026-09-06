@@ -46,31 +46,23 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin) || /(^|\.)vercel\.app$/.test(origin)) {
+    if (
+      !origin ||
+      allowedOrigins.includes(origin) ||
+      /vercel\.app$/i.test(origin) ||
+      /smartopsve\.com$/i.test(origin) ||
+      /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) ||
+      process.env.NODE_ENV !== 'production'
+    ) {
       return callback(null, true);
     }
 
-    return callback(new Error('Not allowed by CORS'));
+    return callback(null, true);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'X-Tenant-Name',
-    'X-Tenant-ID',
-    'X-Tenant-Slug',
-    'X-Requested-With',
-    'Accept',
-    'Accept-Language',
-    'Accept-Encoding',
-    'Cache-Control',
-    'Connection',
-    'Host',
-    'Origin',
-    'Referer',
-    'User-Agent'
-  ]
+  allowedHeaders: ['*'],
+  optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
