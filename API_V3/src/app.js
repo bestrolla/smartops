@@ -17,6 +17,31 @@ dotenv.config();
 
 const app = express();
 
+async function connectDatabase() {
+  if (mongoose.connection.readyState === 1) {
+    return;
+  }
+
+  await mongoose.connect(process.env.MONGO_URI, {
+    serverSelectionTimeoutMS: 15000,
+    socketTimeoutMS: 45000,
+    connectTimeoutMS: 15000,
+    maxPoolSize: 50
+  });
+}
+
+if (process.env.VERCEL) {
+  app.use(async (_req, _res, next) => {
+    try {
+      await connectDatabase();
+      next();
+    } catch (error) {
+      logger.error('MongoDB connection error:', error);
+      next(error);
+    }
+  });
+}
+
 // Middlewares básicos
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -130,12 +155,7 @@ const HOST = process.env.HOST || '0.0.0.0';
 
 async function startServer() {
   try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      serverSelectionTimeoutMS: 15000,
-      socketTimeoutMS: 45000,
-      connectTimeoutMS: 15000,
-      maxPoolSize: 50
-    });
+    await connectDatabase();
     logger.info('MongoDB Connected Successfully');
   } catch (err) {
     logger.error('MongoDB connection error:', err);
@@ -150,7 +170,9 @@ async function startServer() {
   });
 }
 
-startServer();
+if (!process.env.VERCEL) {
+  startServer();
+}
 
 // Ruta principal que maneja diferentes casos
 app.get('/', (req, res) => {
