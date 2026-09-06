@@ -44,29 +44,36 @@ const allowedOrigins = [
   ...(process.env.PUBLIC_SITE_URL ? [process.env.PUBLIC_SITE_URL] : [])
 ];
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (
-      !origin ||
-      allowedOrigins.includes(origin) ||
-      /vercel\.app$/i.test(origin) ||
-      /smartopsve\.com$/i.test(origin) ||
-      /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) ||
-      process.env.NODE_ENV !== 'production'
-    ) {
-      return callback(null, true);
-    }
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  
+  if (
+    !origin ||
+    allowedOrigins.includes(origin) ||
+    /vercel\.app$/i.test(origin) ||
+    /smartopsve\.com$/i.test(origin) ||
+    /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) ||
+    process.env.NODE_ENV !== 'production'
+  ) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  }
 
-    return callback(null, true);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['*'],
-  optionsSuccessStatus: 200
-};
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    req.headers['access-control-request-headers'] ||
+      'Content-Type, Authorization, X-Requested-With, x-requested-with, X-Tenant-Name, x-tenant-name, X-Tenant-ID, x-tenant-id, X-Tenant-Slug, x-tenant-slug, Accept, Origin'
+  );
 
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  next();
+});
 
 // Middleware mejorado para detectar tenant desde la URL
 const { enhancedTenantDetection } = require('./middleware/enhanced-tenant.middleware');
