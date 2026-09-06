@@ -186,3 +186,5 @@ app.use((req, res, next) => {
 
 // Error handler general
 app.use(errorHandler);
+
+module.exports = app;
