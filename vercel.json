@@ -1,5 +1,6 @@
 {
-  "buildCommand": "cd Admin_SmartOps && npm install && npm run build",
+  "installCommand": "cd Admin_SmartOps && npm install --legacy-peer-deps",
+  "buildCommand": "cd Admin_SmartOps && npm run build",
   "outputDirectory": "Admin_SmartOps/dist",
   "rewrites": [
     {
