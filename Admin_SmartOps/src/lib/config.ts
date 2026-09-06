@@ -16,9 +16,9 @@ export const config = {
 // Función para obtener la URL del API por defecto
 function getDefaultApiUrl(): string {
   if (import.meta.env.DEV) {
-    return "/api"; // 👈 usar proxy de Vite en desarrollo para evitar CORS y VPN
+    return "http://localhost:5001/api";
   }
-  return "https://api-smartops-147414442.us-west1.run.app/api"; // 👈 asegúrate que esta sea la correcta
+  return "https://api-smartops-147414442.us-west1.run.app/api";
 }
 
 // Función para obtener la URL del API dinámicamente
