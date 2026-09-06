@@ -9,10 +9,9 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
+            if (id.includes('react-is')) return undefined;
             if (id.includes('@mui')) return 'mui';
-            // Eliminar la separación de react-router-dom para evitar chunk vacío
-            // if (id.includes('react-router-dom')) return 'router';
-            if (id.includes('react-dom') || id.includes('react')) return 'react';
+            if (id.includes('react-dom') || id.includes('/react/')) return 'react';
             if (id.includes('date-fns')) return 'date-fns';
           }
         }
